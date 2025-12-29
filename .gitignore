@@ -20,6 +20,7 @@ pip-wheel-metadata/
 
 # Data and large files
 data/
+data_frames/
 experiments/
 notebooks/
 *.h5
