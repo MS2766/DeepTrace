@@ -26,7 +26,6 @@ notebooks/
 test_ignore.py
 *.h5
 *.hdf5
-*.pt
 *.pth
 *.ckpt
 *.npy
@@ -34,9 +33,6 @@ test_ignore.py
 
 # Logs
 *.log
-
-# Jupyter
-.ipynb_checkpoints/
 
 # OS files
 .DS_Store
