@@ -23,6 +23,7 @@ data/
 data_frames/
 experiments/
 notebooks/
+test_ignore.py
 *.h5
 *.hdf5
 *.pt
