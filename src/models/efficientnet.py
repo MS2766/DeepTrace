@@ -45,3 +45,24 @@ class EfficientNetB0Video(nn.Module):
 
         logits = self.classifier(video_feat).squeeze(1)
         return logits
+    
+    def extract_features(self, x):
+        """
+        Input: x (B, T, C, H, W)
+        Output: (B, 1280) - temporally averaged global pooled features
+        """
+        B, T, C, H, W = x.shape
+        x = x.view(B * T, C, H, W)
+
+        # Pass through backbone (which is already .features)
+        feats = self.backbone(x)                    # shape: (B*T, 1280, 7, 7)
+
+        # Global average pooling → (B*T, 1280)
+        feats = torch.nn.functional.adaptive_avg_pool2d(feats, (1, 1))
+        feats = feats.view(B * T, -1)               # (B*T, 1280)
+
+        # Reshape back and average over time dimension
+        feats = feats.view(B, T, -1)                # (B, T, 1280)
+        pooled = feats.mean(dim=1)                  # (B, 1280)
+
+        return pooled
