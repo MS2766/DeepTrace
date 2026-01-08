@@ -14,7 +14,7 @@ def main():
     NUM_FRAMES = 8
     IMAGE_SIZE = 224
 
-    BATCH_SIZE = 6
+    BATCH_SIZE = 8
     EPOCHS = 20
     LR = 1e-4
     VAL_SPLIT = 0.2
@@ -31,12 +31,16 @@ def main():
         root_dir=DATA_ROOT,
         num_frames=NUM_FRAMES,
         image_size=IMAGE_SIZE,
-        augment=True,   # 👈 IMPORTANT
+        augment=True,
     )
 
     val_size = int(len(dataset) * VAL_SPLIT)
     train_size = len(dataset) - val_size
+
     train_ds, val_ds = random_split(dataset, [train_size, val_size])
+
+    # ✅ SAVE validation indices ONCE
+    torch.save(val_ds.indices, CHECKPOINT_DIR / "val_indices.pt")
 
     pin_memory = torch.cuda.is_available()
 
@@ -46,7 +50,6 @@ def main():
         shuffle=True,
         num_workers=NUM_WORKERS,
         pin_memory=pin_memory,
-        persistent_workers=False,
     )
 
     val_loader = DataLoader(
@@ -55,23 +58,20 @@ def main():
         shuffle=False,
         num_workers=NUM_WORKERS,
         pin_memory=pin_memory,
-        persistent_workers=False,
     )
 
     # ---------------- MODEL ----------------
     model = EfficientNetB0Video().to(DEVICE)
     model = model.to(memory_format=torch.channels_last)
 
-    # Slightly softer class weight
-    pos_weight = torch.tensor([3.5], device=DEVICE)
-    criterion = nn.BCEWithLogitsLoss(pos_weight=pos_weight)
+    criterion = nn.BCEWithLogitsLoss(
+        pos_weight=torch.tensor([3.5], device=DEVICE)
+    )
 
     optimizer = torch.optim.AdamW(model.parameters(), lr=LR)
 
-    # ✅ LR Scheduler (key change)
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
-        optimizer,
-        T_max=EPOCHS
+        optimizer, T_max=EPOCHS
     )
 
     scaler = GradScaler("cuda") if use_amp else None
